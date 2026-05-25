@@ -2989,11 +2989,18 @@ img, video, canvas, svg { max-width: 100%; }
       img.src = dataUrl;
     });
   }
+  function dataUrlToBlob(dataUrl) {
+    const [header, b64] = dataUrl.split(',');
+    const mime = (header.match(/:(.*?);/) || [])[1] || 'image/jpeg';
+    const binary = atob(b64);
+    const arr = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) arr[i] = binary.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  }
   async function uploadPhotoToStorage(dataUrl) {
     if (!pcSupa) return null;
     try {
-      const res = await fetch(dataUrl);
-      const blob = await res.blob();
+      const blob = dataUrlToBlob(dataUrl);
       const filename = 'photo_' + Date.now() + '_' +
         Math.random().toString(36).slice(2, 10) + '.jpg';
       const { error } = await pcSupa.storage
@@ -3069,6 +3076,7 @@ img, video, canvas, svg { max-width: 100%; }
       delete e.dataUrl;
       photosSave();
       photosRender();
+      pcSchedulePush();
     });
   }
   function fileToPhoto(file) {
